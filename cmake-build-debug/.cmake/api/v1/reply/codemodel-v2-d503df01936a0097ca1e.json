@@ -1,0 +1,122 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2
+					],
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.11"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						3
+					]
+				},
+				{
+					"build" : "libs/glad",
+					"jsonFile" : "directory-libs.glad-Debug-ca06ba1f4a1543a5a943.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.11"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "libs/glad",
+					"targetIndexes" : 
+					[
+						1
+					]
+				},
+				{
+					"build" : "libs/imgui",
+					"jsonFile" : "directory-libs.imgui-Debug-1bfd47ea2792a56cc0dd.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.11"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "libs/imgui",
+					"targetIndexes" : 
+					[
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0,
+						1,
+						2
+					],
+					"name" : "project_base",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "STB_IMAGE::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-STB_IMAGE-Debug-e58c542ec642ebb58520.json",
+					"name" : "STB_IMAGE",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "glad::@394eb3637a8e70cb7dd5",
+					"jsonFile" : "target-glad-Debug-5b962f87e7274e3ee925.json",
+					"name" : "glad",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "imgui::@8273e96cb584335637bd",
+					"jsonFile" : "target-imgui-Debug-f92474969556ed6595cb.json",
+					"name" : "imgui",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "project_base::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-project_base-Debug-52bdff678dcde9b61a80.json",
+					"name" : "project_base",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/anja/Documents/projekat/cmake-build-debug",
+		"source" : "/home/anja/Documents/projekat"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 5
+	}
+}

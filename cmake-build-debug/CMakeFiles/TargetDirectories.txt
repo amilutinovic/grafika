@@ -1,0 +1,10 @@
+/home/anja/Documents/projekat/cmake-build-debug/CMakeFiles/STB_IMAGE.dir
+/home/anja/Documents/projekat/cmake-build-debug/CMakeFiles/project_base.dir
+/home/anja/Documents/projekat/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/anja/Documents/projekat/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/anja/Documents/projekat/cmake-build-debug/libs/glad/CMakeFiles/glad.dir
+/home/anja/Documents/projekat/cmake-build-debug/libs/glad/CMakeFiles/edit_cache.dir
+/home/anja/Documents/projekat/cmake-build-debug/libs/glad/CMakeFiles/rebuild_cache.dir
+/home/anja/Documents/projekat/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir
+/home/anja/Documents/projekat/cmake-build-debug/libs/imgui/CMakeFiles/edit_cache.dir
+/home/anja/Documents/projekat/cmake-build-debug/libs/imgui/CMakeFiles/rebuild_cache.dir
