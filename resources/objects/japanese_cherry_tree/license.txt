@@ -1,0 +1,11 @@
+Model Information:
+* title:	Japanese Cherry tree
+* source:	https://sketchfab.com/3d-models/japanese-cherry-tree-ca5a9449555e490cbe726671ed8f95a4
+* author:	Nice2meetU2 (https://sketchfab.com/Nice2meetU2)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Japanese Cherry tree" (https://sketchfab.com/3d-models/japanese-cherry-tree-ca5a9449555e490cbe726671ed8f95a4) by Nice2meetU2 (https://sketchfab.com/Nice2meetU2) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

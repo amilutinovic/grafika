@@ -159,18 +159,25 @@ int main() {
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
 
+
     // build and compile shaders
     // -------------------------
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
 
     // load models
     // -----------
-    Model ourModel("resources/objects/10-japanese_temple_model/Japanese_Temple_Model/Model/Japanese_Temple.obj");
-    ourModel.SetShaderTextureNamePrefix("material.");
+    Model templeModel("resources/objects/10-japanese_temple_model/Japanese_Temple_Model/Model/Japanese_Temple.obj");
+    templeModel.SetShaderTextureNamePrefix("material.");
+
+    Model toriGateModel("resources/objects/tori_gate/scene.gltf");
+    toriGateModel.SetShaderTextureNamePrefix("material.");
+
+    Model treeModel("resources/objects/japanese_cherry_tree/scene.gltf");
+    treeModel.SetShaderTextureNamePrefix("material.");
 
     PointLight& pointLight = programState->pointLight;
-    pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
-    pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
+    pointLight.position = glm::vec3(4.0f, 10.0, 10.0);
+    pointLight.ambient = glm::vec3(1, 1, 1);
     pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 
@@ -183,6 +190,7 @@ int main() {
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+    std::cout<< rand();
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window)) {
@@ -204,7 +212,7 @@ int main() {
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
-        pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
+        pointLight.position = glm::vec3(4.0 * cos(currentFrame), 8.0f, 8.0 * sin(currentFrame));
         ourShader.setVec3("pointLight.position", pointLight.position);
         ourShader.setVec3("pointLight.ambient", pointLight.ambient);
         ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
@@ -221,12 +229,34 @@ int main() {
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
 
-        // render the loaded model
+        // render the temple model
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(0.250f, 0.250f, 0.25f));   // it's a bit too big for our scene, so scale it down
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(0.250f, 0.250f, 0.25f));
         ourShader.setMat4("model", model);
-        ourModel.Draw(ourShader);
+        templeModel.Draw(ourShader);
+
+        // render the Tori gate model
+        glm::mat4 model2 = glm::mat4(1.0f);
+        model2 = glm::translate(model2, glm::vec3(0.0f, 0.0f, 10.0f));
+        // model2 = glm::scale(model2, glm::vec3(0.0f, 0.80f, 0.8f));
+        model2 = glm::rotate(model2, (float)glm::radians(-90.0), glm::vec3(1, 0, 0));
+        ourShader.setMat4("model", model2);
+        toriGateModel.Draw(ourShader);
+
+
+        // render the cherry tree model
+
+        srand(3);
+        int n = 30;
+        std::vector<glm::vec3> treePos;
+        for(int i = 0; i < n; i++) {
+            glm::mat4 model3 = glm::mat4(1.0f);
+            model3 = glm::translate(model3, glm::vec3(rand() % 101 - 50, 0.0f, rand() % 101 - 50));
+            model3 = glm::scale(model3, glm::vec3(0.2f, 0.2f, 0.2f));
+            ourShader.setMat4("model", model3);
+            treeModel.Draw(ourShader);
+        }
 
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
