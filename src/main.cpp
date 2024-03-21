@@ -38,6 +38,9 @@ float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
+bool blinn = false;
+bool BKeyPressed = false;
+
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -51,6 +54,30 @@ struct PointLight {
     float constant;
     float linear;
     float quadratic;
+};
+
+struct DirLight {
+    glm::vec3 direction;
+
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+};
+
+struct SpotLight {
+    glm::vec3 position;
+    glm::vec3 direction;
+    float cutOff;
+    float outerCutOff;
+
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+
+    float constant;
+    float linear;
+    float quadratic;
+
 };
 
 struct ProgramState {
@@ -159,6 +186,8 @@ int main() {
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+
 
 
 
@@ -180,9 +209,30 @@ int main() {
     treeModel.SetShaderTextureNamePrefix("material.");
 
     //lights
+    //directional
+    DirLight directional;
+    directional.direction = glm::vec3(0.0f, 1.0f, 0.0f);
+    directional.ambient = glm::vec3(0.05f);
+    directional.diffuse = glm::vec3(0.4f);
+    directional.specular = glm::vec3(0.5f);
+
+    //spotlight
+    SpotLight spotlight;
+    spotlight.position = programState->camera.Position;
+    spotlight.direction = programState->camera.Front;
+    spotlight.ambient = glm::vec3(0.f);
+    spotlight.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
+    spotlight.specular = glm::vec3(1.0f, 1.0f, 1.0f);
+    spotlight.cutOff = glm::cos(glm::radians(12.5f));
+    spotlight.outerCutOff = glm::cos(glm::radians(15.0f));
+    spotlight.constant = 1.0f;
+    spotlight.linear = 0.09f;
+    spotlight.quadratic = 0.032f;
+
+    //pointlight
     PointLight& pointLight = programState->pointLight;
-    pointLight.position = glm::vec3(4.0f, 10.0, 10.0);
-    pointLight.ambient = glm::vec3(1, 1, 1);
+    pointLight.position = glm::vec3(4.0f, 0.0, 4.0);
+    pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
     pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 
@@ -190,6 +240,8 @@ int main() {
     pointLight.linear = 0.09f;
     pointLight.quadratic = 0.032f;
 
+
+    //skybox
     float skyboxVertices[] = {
             // positions
             -1.0f,  1.0f, -1.0f,
@@ -285,7 +337,8 @@ int main() {
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
-        pointLight.position = glm::vec3(4.0 * cos(currentFrame), 8.0f, 8.0 * sin(currentFrame));
+
+        //lights
         ourShader.setVec3("pointLight.position", pointLight.position);
         ourShader.setVec3("pointLight.ambient", pointLight.ambient);
         ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
@@ -295,6 +348,21 @@ int main() {
         ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
         ourShader.setVec3("viewPosition", programState->camera.Position);
         ourShader.setFloat("material.shininess", 32.0f);
+
+        ourShader.setVec3("directional.direction", directional.direction);
+        ourShader.setVec3("directional.ambient", directional.ambient);
+        ourShader.setVec3("directional.diffuse", directional.diffuse);
+        ourShader.setVec3("directional.specular", directional.specular);
+
+        ourShader.setVec3("spotlight.position", programState->camera.Position);
+        ourShader.setVec3("spotlight.direction", programState->camera.Front);
+        ourShader.setVec3("spotlight.ambient", spotlight.ambient);
+        ourShader.setVec3("spotlight.diffuse", spotlight.diffuse);
+        ourShader.setFloat("spotlight.cutOff", spotlight.cutOff);
+        ourShader.setFloat("spotlight.outerCutOff", spotlight.outerCutOff);
+
+        ourShader.setBool("blinn", blinn);
+
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),(float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = programState->camera.GetViewMatrix();
@@ -329,7 +397,7 @@ int main() {
         }
 
 
-        // draw skybox as last
+         //skybox
         glDepthFunc(GL_LEQUAL);
         skyboxShader.use();
         view = glm::mat4(glm::mat3(programState->camera.GetViewMatrix())); // remove translation from the view matrix
@@ -381,6 +449,14 @@ void processInput(GLFWwindow *window) {
         programState->camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         programState->camera.ProcessKeyboard(RIGHT, deltaTime);
+    //Blinn-Phong
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && BKeyPressed){
+        blinn = !blinn;
+        BKeyPressed = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE) {
+        BKeyPressed = false;
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
