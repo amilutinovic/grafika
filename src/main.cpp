@@ -39,7 +39,6 @@ float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
 bool blinn = false;
-bool BKeyPressed = false;
 
 // timing
 float deltaTime = 0.0f;
@@ -144,7 +143,7 @@ int main() {
 
     // glfw window creation
     // --------------------
-    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Day in Japan", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -186,7 +185,10 @@ int main() {
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
+//    glEnable(GL_CULL_FACE);
+//    glCullFace(GL_BACK);
     glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
 
 
@@ -205,14 +207,19 @@ int main() {
     Model toriGateModel("resources/objects/tori_gate/scene.gltf");
     toriGateModel.SetShaderTextureNamePrefix("material.");
 
-    Model treeModel("resources/objects/japanese_cherry_tree/scene.gltf");
+    Model treeModel("resources/objects/sakura_tree_01_-_low_poly_model/scene.gltf");
     treeModel.SetShaderTextureNamePrefix("material.");
+
+    Model lantern("resources/objects/stylized_lantern/scene.gltf");
+    treeModel.SetShaderTextureNamePrefix("material.");
+
+
 
     //lights
     //directional
     DirLight directional;
-    directional.direction = glm::vec3(0.0f, 1.0f, 0.0f);
-    directional.ambient = glm::vec3(0.05f);
+    directional.direction = glm::vec3(-5.50f, -5.0f, -5.50f);
+    directional.ambient = glm::vec3(0.09f);
     directional.diffuse = glm::vec3(0.4f);
     directional.specular = glm::vec3(0.5f);
 
@@ -230,12 +237,11 @@ int main() {
     spotlight.quadratic = 0.032f;
 
     //pointlight
-    PointLight& pointLight = programState->pointLight;
-    pointLight.position = glm::vec3(4.0f, 0.0, 4.0);
+    PointLight pointLight;
+    pointLight.position = glm::vec3(0.0f, 0.720f, 2.0f);
     pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
-    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
+    pointLight.diffuse = glm::vec3(1.0, 0.3, 0.3);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
-
     pointLight.constant = 1.0f;
     pointLight.linear = 0.09f;
     pointLight.quadratic = 0.032f;
@@ -319,6 +325,8 @@ int main() {
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window)) {
+        std::cout << "----------------------------" << endl;
+        std::cout << "blin: " << blinn << endl;
         // per-frame time logic
         // --------------------
         float currentFrame = glfwGetTime();
@@ -346,6 +354,7 @@ int main() {
         ourShader.setFloat("pointLight.constant", pointLight.constant);
         ourShader.setFloat("pointLight.linear", pointLight.linear);
         ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+
         ourShader.setVec3("viewPosition", programState->camera.Position);
         ourShader.setFloat("material.shininess", 32.0f);
 
@@ -358,8 +367,12 @@ int main() {
         ourShader.setVec3("spotlight.direction", programState->camera.Front);
         ourShader.setVec3("spotlight.ambient", spotlight.ambient);
         ourShader.setVec3("spotlight.diffuse", spotlight.diffuse);
+        ourShader.setVec3("spotlight.specular", spotlight.specular);
         ourShader.setFloat("spotlight.cutOff", spotlight.cutOff);
         ourShader.setFloat("spotlight.outerCutOff", spotlight.outerCutOff);
+        ourShader.setFloat("spotlight.constant", spotlight.constant);
+        ourShader.setFloat("spotlight.linear", spotlight.linear);
+        ourShader.setFloat("spotlight.quadratic", spotlight.quadratic);
 
         ourShader.setBool("blinn", blinn);
 
@@ -377,11 +390,11 @@ int main() {
         templeModel.Draw(ourShader);
 
         // render the Tori gate model
-        glm::mat4 model2 = glm::mat4(1.0f);
-        model2 = glm::translate(model2, glm::vec3(0.0f, 0.0f, 10.0f));
-        model2 = glm::rotate(model2, (float)glm::radians(-90.0), glm::vec3(1, 0, 0));
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 10.0f));
+        model = glm::rotate(model, (float)glm::radians(-90.0), glm::vec3(1, 0, 0));
         // model2 = glm::scale(model2, glm::vec3(0.0f, 0.80f, 0.8f));
-        ourShader.setMat4("model", model2);
+        ourShader.setMat4("model", model);
         toriGateModel.Draw(ourShader);
 
         // render the cherry tree model
@@ -389,18 +402,25 @@ int main() {
         int n = 30;
         std::vector<glm::vec3> treePos;
         for(int i = 0; i < n; i++) {
-            glm::mat4 model3 = glm::mat4(1.0f);
-            model3 = glm::translate(model3, glm::vec3(rand() % 101 - 50, 0.0f, rand() % 101 - 50));
-            model3 = glm::scale(model3, glm::vec3(0.2f, 0.2f, 0.2f));
-            ourShader.setMat4("model", model3);
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(rand() % 101 - 50, 0.0f, rand() % 101 - 50));
+            model = glm::rotate(model, (float)glm::radians(-90.0), glm::vec3(1, 0, 0));
+            model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
+            ourShader.setMat4("model", model);
             treeModel.Draw(ourShader);
         }
+        //render lantern model
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.720f, 2.0f));
+        model = glm::scale(model, glm::vec3(0.002f, 0.002f, 0.002f));
+        model = glm::rotate(model, (float)glm::radians(-90.0), glm::vec3(1, 0, 0));
+        ourShader.setMat4("model", model);
+        lantern.Draw(ourShader);
 
-
-         //skybox
+//         //skybox
         glDepthFunc(GL_LEQUAL);
         skyboxShader.use();
-        view = glm::mat4(glm::mat3(programState->camera.GetViewMatrix())); // remove translation from the view matrix
+        view = glm::mat4(glm::mat3(programState->camera.GetViewMatrix()));
         skyboxShader.setMat4("view", view);
         skyboxShader.setMat4("projection", projection);
         // skybox cube
@@ -409,7 +429,7 @@ int main() {
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
-        glDepthFunc(GL_LESS); // set depth function back to default
+        glDepthFunc(GL_LESS);
 
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
@@ -449,14 +469,7 @@ void processInput(GLFWwindow *window) {
         programState->camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         programState->camera.ProcessKeyboard(RIGHT, deltaTime);
-    //Blinn-Phong
-    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && BKeyPressed){
-        blinn = !blinn;
-        BKeyPressed = true;
-    }
-    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE) {
-        BKeyPressed = false;
-    }
+
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -536,6 +549,9 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         } else {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }
+    }
+    if(key == GLFW_KEY_B && action == GLFW_PRESS){
+        blinn = !blinn;
     }
 }
 
