@@ -150,7 +150,7 @@ int main() {
 
     // glfw window creation
     // --------------------
-    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Day in Japan", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Sunrise in Japan", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -219,7 +219,13 @@ int main() {
     treeModel.SetShaderTextureNamePrefix("material.");
 
     Model lantern("resources/objects/stylized_lantern/scene.gltf");
-    treeModel.SetShaderTextureNamePrefix("material.");
+    lantern.SetShaderTextureNamePrefix("material.");
+
+    Model ground("resources/objects/iceland_landscape/scene.gltf");
+    ground.SetShaderTextureNamePrefix("material.");
+
+    Model umbrellaModel("resources/objects/japanese_umbrella/scene.gltf");
+    umbrellaModel.SetShaderTextureNamePrefix("material.");
 
 
 //    //load texture
@@ -242,9 +248,9 @@ int main() {
     //lights
     //directional
     DirLight directional;
-    directional.direction = glm::vec3(-5.50f, -5.0f, -5.50f);
-    directional.ambient = glm::vec3(0.05f);
-    directional.diffuse = glm::vec3(0.4f);
+    directional.direction = glm::vec3(5.0f, -9.0f, 5.0f);
+    directional.ambient = glm::vec3(0.4f);
+    directional.diffuse = glm::vec3(0.8f, 0.3f, 0.3f);
     directional.specular = glm::vec3(0.05f);
 
     //spotlight
@@ -262,13 +268,22 @@ int main() {
 
     //pointlight
     PointLight pointLight;
-    pointLight.position = glm::vec3(-0.01f, 0.62f, 2.0f);
-    pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
-    pointLight.diffuse = glm::vec3(1.0, 0.3, 0.3);
-    pointLight.specular = glm::vec3(0.50, 0.50, 0.50);
+    pointLight.position = glm::vec3(-0.812f, 2.046f, 5.250f);
+    pointLight.ambient = glm::vec3(0.05, 0.05, 0.05);
+    pointLight.diffuse = glm::vec3(1.0, 0.0, 0.3);
+    pointLight.specular = glm::vec3(0.20, 0.20, 0.20);
     pointLight.constant = 1.0f;
     pointLight.linear = 0.09f;
     pointLight.quadratic = 0.032f;
+
+    PointLight pointLight2;
+    pointLight2.position = glm::vec3(0.8f, 2.046f, 5.250f);
+    pointLight2.ambient = glm::vec3(0.05, 0.05, 0.05);
+    pointLight2.diffuse = glm::vec3(0.90, 0.3, 0.3);
+    pointLight2.specular = glm::vec3(0.20, 0.20, 0.20);
+    pointLight2.constant = 1.0f;
+    pointLight2.linear = 0.09f;
+    pointLight2.quadratic = 0.032f;
 
 
     //skybox
@@ -431,7 +446,51 @@ int main() {
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),(float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = programState->camera.GetViewMatrix();
         glm::mat4 model = glm::mat4(1.0f);
-
+//
+//        normalShader.use();
+//        normalShader.setMat4("projection", projection);
+//        normalShader.setMat4("view", view);
+//        model = glm::mat4(1.0f);
+//        normalShader.setMat4("model", model);
+//        normalShader.setVec3("viewPos", programState->camera.Position);
+//
+//        //lights
+//        normalShader.setVec3("pointLight.position", pointLight.position);
+//        normalShader.setVec3("pointLight.ambient", pointLight.ambient);
+//        normalShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+//        normalShader.setVec3("pointLight.specular", pointLight.specular);
+//        normalShader.setFloat("pointLight.constant", pointLight.constant);
+//        normalShader.setFloat("pointLight.linear", pointLight.linear);
+//        normalShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+//
+//
+//        normalShader.setVec3("dirLight.direction", directional.direction);
+//        normalShader.setVec3("dirLight.ambient", directional.ambient);
+//        normalShader.setVec3("dirLight.diffuse", directional.diffuse);
+//        normalShader.setVec3("dirLight.specular", directional.specular);
+//
+//        normalShader.setVec3("spotLight.position", programState->camera.Position);
+//        normalShader.setVec3("spotLight.direction", programState->camera.Front);
+//        normalShader.setVec3("spotLight.ambient", spotlight.ambient);
+//        normalShader.setVec3("spotLight.diffuse", spotlight.diffuse);
+//        normalShader.setVec3("spotLight.specular", spotlight.specular);
+//        normalShader.setFloat("spotLight.cutOff", spotlight.cutOff);
+//        normalShader.setFloat("spotLight.outerCutOff", spotlight.outerCutOff);
+//        normalShader.setFloat("spotLight.constant", spotlight.constant);
+//        normalShader.setFloat("spotLight.linear", spotlight.linear);
+//        normalShader.setFloat("spotLight.quadratic", spotlight.quadratic);
+//
+//        normalShader.setBool("blinn", blinn);
+//
+//        normalShader.setFloat("heightScale", heightScale);
+//
+//        glActiveTexture(GL_TEXTURE0);
+//        glBindTexture(GL_TEXTURE_2D, diffuseMap);
+//        glActiveTexture(GL_TEXTURE1);
+//        glBindTexture(GL_TEXTURE_2D, normalMap);
+//        glActiveTexture(GL_TEXTURE2);
+//        glBindTexture(GL_TEXTURE_2D, depthMap);
+//        renderQuad();
 
 
 
@@ -446,6 +505,14 @@ int main() {
         ourShader.setFloat("pointLight.constant", pointLight.constant);
         ourShader.setFloat("pointLight.linear", pointLight.linear);
         ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+
+        ourShader.setVec3("pointLight2.position", pointLight2.position);
+        ourShader.setVec3("pointLight2.ambient", pointLight2.ambient);
+        ourShader.setVec3("pointLight2.diffuse", pointLight2.diffuse);
+        ourShader.setVec3("pointLight2.specular", pointLight2.specular);
+        ourShader.setFloat("pointLight2.constant", pointLight2.constant);
+        ourShader.setFloat("pointLight2.linear", pointLight2.linear);
+        ourShader.setFloat("pointLight2.quadratic", pointLight2.quadratic);
 
         ourShader.setVec3("viewPosition", programState->camera.Position);
         ourShader.setFloat("material.shininess", 32.0f);
@@ -474,14 +541,14 @@ int main() {
 
         // render the temple model
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(0.250f, 0.250f, 0.25f));
+        model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(0.40f, 0.40f, 0.4f));
         ourShader.setMat4("model", model);
         templeModel.Draw(ourShader);
 
         // render the Tori gate model
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 4.0f, 10.0f));
+        model = glm::translate(model, glm::vec3(0.0f, 3.70f, 15.0f));
         model = glm::rotate(model, (float)glm::radians(-90.0), glm::vec3(1, 0, 0));
         // model2 = glm::scale(model2, glm::vec3(0.0f, 0.80f, 0.8f));
         ourShader.setMat4("model", model);
@@ -493,78 +560,90 @@ int main() {
         std::vector<glm::vec3> treePos;
         for(int i = 0; i < n; i++) {
             model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(rand() % 101 - 50, 0.0f, rand() % 101 - 50));
+            float treeX = rand() % 101 - 50;
+            float treeZ = rand() %101 -50;
+            float treeY = 0.0f;
+            if(treeX < -12.5 && treeZ < 0)
+                treeY = 4.0f;
+            else if(treeX < -10 && treeZ < 18)
+                treeY = 2.0f;
+            else if(treeX < -33 && treeZ >27)
+                treeY = 3.0f;
+            model = glm::translate(model, glm::vec3(treeX, treeY, treeZ));
             model = glm::rotate(model, (float)glm::radians(-90.0), glm::vec3(1, 0, 0));
             model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
             ourShader.setMat4("model", model);
             treeModel.Draw(ourShader);
         }
+
+        //render umbrella
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(cos(glfwGetTime()/2) + 5, 2*(sin(glfwGetTime())) + 9, sin(glfwGetTime()/2) + 5));
+        model = glm::rotate(model, (float)glm::radians(-90.0), glm::vec3(1, 0, 0));
+        model = glm::rotate(model, sin((float)glfwGetTime()) * (float)glm::radians(30.0), glm::vec3(1, 0, 0));
+        model = glm::rotate(model,(float) glfwGetTime(), glm::vec3(0, 0, 1));
+
+        ourShader.setMat4("model", model);
+        umbrellaModel.Draw(ourShader);
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(sin(glfwGetTime()/2) - 5, 2*(sin(glfwGetTime())) + 9, cos(glfwGetTime()/2) + 5));
+        model = glm::rotate(model, (float)glm::radians(-90.0), glm::vec3(1, 0, 0));
+        model = glm::rotate(model, cos((float)glfwGetTime()) * (float)glm::radians(30.0), glm::vec3(1, 0, 0));
+        model = glm::rotate(model,(float) glfwGetTime(), glm::vec3(0, 0, 1));
+
+
+        // model2 = glm::scale(model2, glm::vec3(0.0f, 0.80f, 0.8f));
+        ourShader.setMat4("model", model);
+        umbrellaModel.Draw(ourShader);
+
         //kocka
         cubeShader.use();
         cubeShader.setMat4("view", view);
         cubeShader.setMat4("projection", projection);
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-0.01f, 0.62f, 2.0f));
-        model = glm::scale(model, glm::vec3(0.03f, 0.03f, 0.03f));
+        model = glm::translate(model, glm::vec3(-0.812f, 2.046f, 5.250f));
+        model = glm::scale(model, glm::vec3(0.095f, 0.095f, 0.095f));
         cubeShader.setMat4("model", model);
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
 
+        cubeShader.use();
+        cubeShader.setMat4("view", view);
+        cubeShader.setMat4("projection", projection);
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.8f, 2.046f, 5.250f));
+        model = glm::scale(model, glm::vec3(0.095f, 0.095f, 0.095f));
+        cubeShader.setMat4("model", model);
+        glBindVertexArray(lightCubeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+
+        ourShader.use();
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, -1.0f, 5.0f));
+        model = glm::scale(model, glm::vec3(100.0f, 100.0f, 100.0f));
+        model = glm::rotate(model, (float)glm::radians(-90.0), glm::vec3(1, 0, 0));
+        ourShader.setMat4("model", model);
+        ground.Draw(ourShader);
 
         //render lantern model
-        ourShader.use();
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.720f, 2.0f));
-        model = glm::scale(model, glm::vec3(0.002f, 0.002f, 0.002f));
+        model = glm::translate(model, glm::vec3(-0.7930f, 2.3650f, 5.25f));
+        model = glm::scale(model, glm::vec3(0.005f, 0.005f, 0.005f));
         model = glm::rotate(model, (float)glm::radians(-90.0), glm::vec3(1, 0, 0));
         ourShader.setMat4("model", model);
         lantern.Draw(ourShader);
 
-        normalShader.use();
-        normalShader.setMat4("projection", projection);
-        normalShader.setMat4("view", view);
         model = glm::mat4(1.0f);
-        normalShader.setMat4("model", model);
-        normalShader.setVec3("viewPos", programState->camera.Position);
+        model = glm::translate(model, glm::vec3(0.822f, 2.3650f, 5.25f));
+        model = glm::scale(model, glm::vec3(0.005f, 0.005f, 0.005f));
+        model = glm::rotate(model, (float)glm::radians(-90.0), glm::vec3(1, 0, 0));
+        ourShader.setMat4("model", model);
+        lantern.Draw(ourShader);
 
-        //lights
-        normalShader.setVec3("pointLight.position", pointLight.position);
-        normalShader.setVec3("pointLight.ambient", pointLight.ambient);
-        normalShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        normalShader.setVec3("pointLight.specular", pointLight.specular);
-        normalShader.setFloat("pointLight.constant", pointLight.constant);
-        normalShader.setFloat("pointLight.linear", pointLight.linear);
-        normalShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-
-
-        normalShader.setVec3("dirLight.direction", directional.direction);
-        normalShader.setVec3("dirLight.ambient", directional.ambient);
-        normalShader.setVec3("dirLight.diffuse", directional.diffuse);
-        normalShader.setVec3("dirLight.specular", directional.specular);
-
-        normalShader.setVec3("spotLight.position", programState->camera.Position);
-        normalShader.setVec3("spotLight.direction", programState->camera.Front);
-        normalShader.setVec3("spotLight.ambient", spotlight.ambient);
-        normalShader.setVec3("spotLight.diffuse", spotlight.diffuse);
-        normalShader.setVec3("spotLight.specular", spotlight.specular);
-        normalShader.setFloat("spotLight.cutOff", spotlight.cutOff);
-        normalShader.setFloat("spotLight.outerCutOff", spotlight.outerCutOff);
-        normalShader.setFloat("spotLight.constant", spotlight.constant);
-        normalShader.setFloat("spotLight.linear", spotlight.linear);
-        normalShader.setFloat("spotLight.quadratic", spotlight.quadratic);
-
-        normalShader.setBool("blinn", blinn);
-
-        normalShader.setFloat("heightScale", heightScale);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, diffuseMap);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, normalMap);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
-        renderQuad();
 
 
 //         //skybox
@@ -809,10 +888,10 @@ void renderQuad()
         glm::vec3 pos3( -60.0f, -0.1f, -60.0f);
         glm::vec3 pos4( -60.0f,  -0.1f, 60.0f);
         // texture coordinates
-        glm::vec2 uv1(0.0f, 1.0f);
+        glm::vec2 uv1(0.0f, 20.0f);
         glm::vec2 uv2(0.0f, 0.0f);
-        glm::vec2 uv3(1.0f, 0.0f);
-        glm::vec2 uv4(1.0f, 1.0f);
+        glm::vec2 uv3(20.0f, 0.0f);
+        glm::vec2 uv4(20.0f, 20.0f);
         // normal vector
         glm::vec3 nm(0.0f, 0.0f, 1.0f);
 
@@ -831,11 +910,13 @@ void renderQuad()
         tangent1.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
         tangent1.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
         tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+        tangent1 = glm::normalize(tangent1);
+
 
         bitangent1.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
         bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
         bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
-
+        bitangent1 = glm::normalize(bitangent1);
         // triangle 2
         // ----------
         edge1 = pos3 - pos1;
@@ -848,12 +929,12 @@ void renderQuad()
         tangent2.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
         tangent2.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
         tangent2.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-
+        tangent2 = glm::normalize(tangent2);
 
         bitangent2.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
         bitangent2.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
         bitangent2.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
-
+        bitangent2 = glm::normalize(bitangent2);
 
         float quadVertices[] = {
                 // positions            // normal         // texcoords  // tangent                          // bitangent
