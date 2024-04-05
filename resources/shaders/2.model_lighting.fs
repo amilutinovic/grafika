@@ -1,5 +1,6 @@
 #version 330 core
-out vec4 FragColor;
+layout (location = 0) out vec4 FragColor;
+layout (location = 1) out vec4 BrightColor;
 
 struct Material {
     sampler2D texture_diffuse1;
@@ -62,11 +63,17 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir){
     // diffuse shading
     float diff = max(dot(normal, lightDir), 0.0);
     // specular shading
-    vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+//     vec3 reflectDir = reflect(-lightDir, normal);
+//     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+
+    float spec = 0.0;
     if(blinn){
         vec3 halfwayDir = normalize(lightDir + viewDir);
         spec = pow(max(dot(normal, halfwayDir),0.0), material.shininess);
+    }else{
+        vec3 reflectDir = reflect(-lightDir, normal);
+        spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+
     }
     // attenuation
     float distance = length(light.position - fragPos);
@@ -109,12 +116,16 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir){
     // diffuse shading
     float diff = max(dot(normal, lightDir), 0.0);
     // specular shading
-    vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+//     vec3 reflectDir = reflect(-lightDir, normal);
+//     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    float spec = 0.0;
     //Blinn-Phong
      if(blinn){
             vec3 halfwayDir = normalize(lightDir + viewDir);
             spec = pow(max(dot(normal, halfwayDir),0.0), material.shininess);
+     }else{
+        vec3 reflectDir = reflect(-lightDir, normal);
+        spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
      }
     // attenuation
     float distance = length(light.position - fragPos);
@@ -143,5 +154,13 @@ void main() {
     result += CalcPointLight(pointLight2, normal, FragPos, viewDir);
      result += CalcDirLight(directional, normal, viewDir);
     result += CalcSpotLight(spotlight, normal, FragPos, viewDir);
+
+    //bloom
+    float brightness = dot(result, vec3(0.2126, 0.7152, 0.0722));
+        if(brightness > 1.0)
+            BrightColor = vec4(result, 1.0);
+        else
+            BrightColor = vec4(0.0, 0.0, 0.0, 1.0);
+
     FragColor = vec4(result, texColor.a);
 }

@@ -10,8 +10,7 @@ out vec3 FragPos;
 out vec2 TexCoords;
 out vec3 TangentViewPos;
 out vec3 TangentFragPos;
-out mat3 TBN;
-out vec3 Normal;
+
 
 uniform mat4 projection;
 uniform mat4 view;
@@ -31,7 +30,6 @@ void main()
     mat3 TBN = transpose(mat3(T, B, N));
     TangentViewPos  = TBN * viewPos;
     TangentFragPos  = TBN * FragPos;
-    Normal = transpose(inverse(mat3(model))) * aNormal;
 
     gl_Position = projection * view * model * vec4(aPos, 1.0);
 }

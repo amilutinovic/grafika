@@ -30,7 +30,10 @@ unsigned int loadCubemap(vector<std::string> faces);
 
 unsigned int loadTexture(char const * path);
 
+void renderNPM();
+
 void renderQuad();
+
 
 
 // settings
@@ -45,6 +48,10 @@ bool firstMouse = true;
 
 bool blinn = false;
 float heightScale = 0.1;
+bool hdr = true;
+float exposure = 0.1f;
+bool bloom = true;
+bool grayscale = false;
 
 
 // timing
@@ -192,8 +199,8 @@ int main() {
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
-//    glEnable(GL_CULL_FACE);
-//    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
@@ -206,6 +213,8 @@ int main() {
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
     Shader cubeShader("resources/shaders/cube.vs", "resources/shaders/cube.fs");
     Shader normalShader("resources/shaders/normal.vs", "resources/shaders/normal.fs");
+    Shader blurShader("resources/shaders/blur.vs", "resources/shaders/blur.fs");
+    Shader finalShader("resources/shaders/final.vs", "resources/shaders/final.fs");
 
     // load models
     // -----------
@@ -227,15 +236,18 @@ int main() {
     Model umbrellaModel("resources/objects/japanese_umbrella/scene.gltf");
     umbrellaModel.SetShaderTextureNamePrefix("material.");
 
+    Model poolModel("resources/objects/brunnen/scene.gltf");
+    poolModel.SetShaderTextureNamePrefix("material.");
+
 
 //    //load texture
 //    unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/Forest01_diffuse_4k.jpg").c_str());
 //    unsigned int normalMap  = loadTexture(FileSystem::getPath("resources/textures/Forest01_normal_4k.jpg").c_str());
 //    unsigned int depthMap  = loadTexture(FileSystem::getPath("resources/textures/Forest01_height_4k.jpg").c_str());
 
-    unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/21_grassy_mountains_oceania_diff.jpeg").c_str());
-    unsigned int normalMap  = loadTexture(FileSystem::getPath("resources/textures/21_grassy_mountains_oceania_norm_02.jpeg").c_str());
-    unsigned int depthMap  = loadTexture(FileSystem::getPath("resources/textures/21_grassy_mountains_oceania_disp.jpeg").c_str());
+    unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/Wave_Base_Color.png").c_str());
+    unsigned int normalMap  = loadTexture(FileSystem::getPath("resources/textures/Wave_Normal.png").c_str());
+    unsigned int depthMap  = loadTexture(FileSystem::getPath("resources/textures/Wave_Height.png").c_str());
 
 
     // shader configuration
@@ -249,16 +261,16 @@ int main() {
     //directional
     DirLight directional;
     directional.direction = glm::vec3(5.0f, -9.0f, 5.0f);
-    directional.ambient = glm::vec3(0.4f);
-    directional.diffuse = glm::vec3(0.8f, 0.3f, 0.3f);
-    directional.specular = glm::vec3(0.05f);
+    directional.ambient = glm::vec3(0.5f);
+    directional.diffuse = glm::vec3(1.20f, 0.70f, 0.70f);
+    directional.specular = glm::vec3(0.90f);
 
     //spotlight
     SpotLight spotlight;
     spotlight.position = programState->camera.Position;
     spotlight.direction = programState->camera.Front;
-    spotlight.ambient = glm::vec3(0.f);
-    spotlight.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
+    spotlight.ambient = glm::vec3(1.0f);
+    spotlight.diffuse = glm::vec3(4.0f, 4.0f, 4.0f);
     spotlight.specular = glm::vec3(1.0f, 1.0f, 1.0f);
     spotlight.cutOff = glm::cos(glm::radians(12.5f));
     spotlight.outerCutOff = glm::cos(glm::radians(15.0f));
@@ -269,18 +281,18 @@ int main() {
     //pointlight
     PointLight pointLight;
     pointLight.position = glm::vec3(-0.812f, 2.046f, 5.250f);
-    pointLight.ambient = glm::vec3(0.05, 0.05, 0.05);
-    pointLight.diffuse = glm::vec3(1.0, 0.0, 0.3);
-    pointLight.specular = glm::vec3(0.20, 0.20, 0.20);
+    pointLight.ambient = glm::vec3(3.0, 1.0, 1.0);
+    pointLight.diffuse = glm::vec3(3.0, 1.0, 1.0);
+    pointLight.specular = glm::vec3(3.0, 1.0, 1.0);
     pointLight.constant = 1.0f;
     pointLight.linear = 0.09f;
     pointLight.quadratic = 0.032f;
 
     PointLight pointLight2;
     pointLight2.position = glm::vec3(0.8f, 2.046f, 5.250f);
-    pointLight2.ambient = glm::vec3(0.05, 0.05, 0.05);
-    pointLight2.diffuse = glm::vec3(0.90, 0.3, 0.3);
-    pointLight2.specular = glm::vec3(0.20, 0.20, 0.20);
+    pointLight2.ambient = glm::vec3(3.0, 1.0, 1.0);
+    pointLight2.diffuse = glm::vec3(3.0, 1.0, 1.0);
+    pointLight2.specular = glm::vec3(3.0, 1.0, 1.0);
     pointLight2.constant = 1.0f;
     pointLight2.linear = 0.09f;
     pointLight2.quadratic = 0.032f;
@@ -361,48 +373,48 @@ int main() {
 
     //kocka
     float vertices[] = {
-            // positions          // normals           // texture coords
-            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
-            0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
-            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
-            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
-
-            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
-            0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
-            0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
-            0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
-
-            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-            -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
-            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-            -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
-            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-
-            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-            0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
-            0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-            0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-            0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
-            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-
-            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
-            0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
-            0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
-            0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
-
-            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
-            0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
-            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
-            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
+            // back face
+            -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+            1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+            1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, // bottom-right
+            1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+            -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+            -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f, // top-left
+            // front face
+            -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+            1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f, // bottom-right
+            1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+            1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+            -1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, // top-left
+            -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+            // left face
+            -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+            -1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-left
+            -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+            -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+            -1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+            -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+            // right face
+            1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+            1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+            1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-right
+            1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+            1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+            1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-left
+            // bottom face
+            -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+            1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // top-left
+            1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+            1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+            -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+            -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+            // top face
+            -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+            1.0f,  1.0f , 1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+            1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f, // top-right
+            1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+            -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+            -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // bottom-left
     };
 
     unsigned int lightCubeVAO, lightCubeVBO;
@@ -417,6 +429,69 @@ int main() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 
 
+    //HDR i bloom
+    // configure (floating point) framebuffers
+    // ---------------------------------------
+    unsigned int hdrFBO;
+    glGenFramebuffers(1, &hdrFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+    // create 2 floating point color buffers (1 for normal rendering, other for brightness threshold values)
+    unsigned int colorBuffers[2];
+    glGenTextures(2, colorBuffers);
+    for (unsigned int i = 0; i < 2; i++)
+    {
+        glBindTexture(GL_TEXTURE_2D, colorBuffers[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);  // we clamp to the edge as the blur filter would otherwise sample repeated texture values!
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        // attach texture to framebuffer
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorBuffers[i], 0);
+    }
+    // create and attach depth buffer (renderbuffer)
+    unsigned int rboDepth;
+    glGenRenderbuffers(1, &rboDepth);
+    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+    unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+    glDrawBuffers(2, attachments);
+    //check if framebuffer is complete
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "Framebuffer not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // ping-pong-framebuffer for blurring
+    unsigned int pingpongFBO[2];
+    unsigned int pingpongColorbuffers[2];
+    glGenFramebuffers(2, pingpongFBO);
+    glGenTextures(2, pingpongColorbuffers);
+    for (unsigned int i = 0; i < 2; i++)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+        glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongColorbuffers[i], 0);
+        //check if framebuffers are complete
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            std::cout << "Framebuffer not complete!" << std::endl;
+    }
+
+
+
+
+    finalShader.use();
+    finalShader.setInt("hdrBuffer", 0);
+    finalShader.setInt("bloomBlur", 1);
+    blurShader.use();
+    blurShader.setInt("image", 0);
+
+
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // render loop
@@ -425,6 +500,12 @@ int main() {
         std::cout << "----------------------------" << endl;
         std::cout << "blin: " << blinn << endl;
         std::cout << "heightscale" << heightScale << std::endl;
+        std::cout << "hdr" << hdr << std::endl;
+        std::cout << "exposure" << exposure << std::endl;
+        std::cout << "bloom" << bloom << std::endl;
+        std::cout << "grayscale" << grayscale << std::endl;
+
+
 
         // per-frame time logic
         // --------------------
@@ -442,55 +523,70 @@ int main() {
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),(float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = programState->camera.GetViewMatrix();
         glm::mat4 model = glm::mat4(1.0f);
-//
-//        normalShader.use();
-//        normalShader.setMat4("projection", projection);
-//        normalShader.setMat4("view", view);
-//        model = glm::mat4(1.0f);
-//        normalShader.setMat4("model", model);
-//        normalShader.setVec3("viewPos", programState->camera.Position);
-//
-//        //lights
-//        normalShader.setVec3("pointLight.position", pointLight.position);
-//        normalShader.setVec3("pointLight.ambient", pointLight.ambient);
-//        normalShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-//        normalShader.setVec3("pointLight.specular", pointLight.specular);
-//        normalShader.setFloat("pointLight.constant", pointLight.constant);
-//        normalShader.setFloat("pointLight.linear", pointLight.linear);
-//        normalShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-//
-//
-//        normalShader.setVec3("dirLight.direction", directional.direction);
-//        normalShader.setVec3("dirLight.ambient", directional.ambient);
-//        normalShader.setVec3("dirLight.diffuse", directional.diffuse);
-//        normalShader.setVec3("dirLight.specular", directional.specular);
-//
-//        normalShader.setVec3("spotLight.position", programState->camera.Position);
-//        normalShader.setVec3("spotLight.direction", programState->camera.Front);
-//        normalShader.setVec3("spotLight.ambient", spotlight.ambient);
-//        normalShader.setVec3("spotLight.diffuse", spotlight.diffuse);
-//        normalShader.setVec3("spotLight.specular", spotlight.specular);
-//        normalShader.setFloat("spotLight.cutOff", spotlight.cutOff);
-//        normalShader.setFloat("spotLight.outerCutOff", spotlight.outerCutOff);
-//        normalShader.setFloat("spotLight.constant", spotlight.constant);
-//        normalShader.setFloat("spotLight.linear", spotlight.linear);
-//        normalShader.setFloat("spotLight.quadratic", spotlight.quadratic);
-//
-//        normalShader.setBool("blinn", blinn);
-//
-//        normalShader.setFloat("heightScale", heightScale);
-//
-//        glActiveTexture(GL_TEXTURE0);
-//        glBindTexture(GL_TEXTURE_2D, diffuseMap);
-//        glActiveTexture(GL_TEXTURE1);
-//        glBindTexture(GL_TEXTURE_2D, normalMap);
-//        glActiveTexture(GL_TEXTURE2);
-//        glBindTexture(GL_TEXTURE_2D, depthMap);
-//        renderQuad();
+
+        glDisable(GL_CULL_FACE);
+        normalShader.use();
+        normalShader.setMat4("projection", projection);
+        normalShader.setMat4("view", view);
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(10.0f, 1.3f, 10.0f));
+        model = glm::rotate(model, (float)glm::radians(-90.0), glm::vec3(1, 0, 0));
+         model = glm::scale(model, glm::vec3(0.90f, 0.90f, 1.0f));
+        normalShader.setMat4("model", model);
+        normalShader.setVec3("viewPos", programState->camera.Position);
+
+        //lights
+        normalShader.setVec3("pointLight.position", pointLight.position);
+        normalShader.setVec3("pointLight.ambient", pointLight.ambient);
+        normalShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+        normalShader.setVec3("pointLight.specular", pointLight.specular);
+        normalShader.setFloat("pointLight.constant", pointLight.constant);
+        normalShader.setFloat("pointLight.linear", pointLight.linear);
+        normalShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+
+        normalShader.setVec3("pointLight2.position", pointLight2.position);
+        normalShader.setVec3("pointLight2.ambient", pointLight2.ambient);
+        normalShader.setVec3("pointLight2.diffuse", pointLight2.diffuse);
+        normalShader.setVec3("pointLight2.specular", pointLight2.specular);
+        normalShader.setFloat("pointLight2.constant", pointLight2.constant);
+        normalShader.setFloat("pointLight2.linear", pointLight2.linear);
+        normalShader.setFloat("pointLight2.quadratic", pointLight2.quadratic);
+
+
+        normalShader.setVec3("dirLight.direction", directional.direction);
+        normalShader.setVec3("dirLight.ambient", directional.ambient);
+        normalShader.setVec3("dirLight.diffuse", directional.diffuse);
+        normalShader.setVec3("dirLight.specular", directional.specular);
+
+        normalShader.setVec3("spotLight.position", programState->camera.Position);
+        normalShader.setVec3("spotLight.direction", programState->camera.Front);
+        normalShader.setVec3("spotLight.ambient", spotlight.ambient);
+        normalShader.setVec3("spotLight.diffuse", spotlight.diffuse);
+        normalShader.setVec3("spotLight.specular", spotlight.specular);
+        normalShader.setFloat("spotLight.cutOff", spotlight.cutOff);
+        normalShader.setFloat("spotLight.outerCutOff", spotlight.outerCutOff);
+        normalShader.setFloat("spotLight.constant", spotlight.constant);
+        normalShader.setFloat("spotLight.linear", spotlight.linear);
+        normalShader.setFloat("spotLight.quadratic", spotlight.quadratic);
+
+        normalShader.setBool("blinn", blinn);
+
+        normalShader.setFloat("heightScale", heightScale);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, diffuseMap);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, normalMap);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        renderNPM();
 
 
 
@@ -554,6 +650,14 @@ int main() {
         ourShader.setMat4("model", model);
         toriGateModel.Draw(ourShader);
 
+        // render the pool model
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(10.0f, 0.99f, 10.0f));
+        model = glm::rotate(model, (float)glm::radians(-90.0), glm::vec3(1, 0, 0));
+         model = glm::scale(model, glm::vec3(0.08f, 0.08f, 0.08f));
+        ourShader.setMat4("model", model);
+        poolModel.Draw(ourShader);
+
         // render the cherry tree model
         srand(3);
         int n = 30;
@@ -597,13 +701,14 @@ int main() {
         ourShader.setMat4("model", model);
         umbrellaModel.Draw(ourShader);
 
+        glEnable(GL_CULL_FACE);
         //kocka
         cubeShader.use();
         cubeShader.setMat4("view", view);
         cubeShader.setMat4("projection", projection);
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(-0.812f, 2.046f, 5.250f));
-        model = glm::scale(model, glm::vec3(0.095f, 0.095f, 0.095f));
+        model = glm::scale(model, glm::vec3(0.045f, 0.045f, 0.045f));
         cubeShader.setMat4("model", model);
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -614,7 +719,7 @@ int main() {
         cubeShader.setMat4("projection", projection);
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.8f, 2.046f, 5.250f));
-        model = glm::scale(model, glm::vec3(0.095f, 0.095f, 0.095f));
+        model = glm::scale(model, glm::vec3(0.045f, 0.045f, 0.045f));
         cubeShader.setMat4("model", model);
         glBindVertexArray(lightCubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -622,6 +727,7 @@ int main() {
 
         ourShader.use();
 
+        //render ground
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, -1.0f, 5.0f));
         model = glm::scale(model, glm::vec3(100.0f, 100.0f, 100.0f));
@@ -659,6 +765,39 @@ int main() {
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
         glDepthFunc(GL_LESS);
+
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // blur bright fragments with two-pass Gaussian Blur
+        bool horizontal = true, first_iteration = true;
+        unsigned int amount = 10;
+        blurShader.use();
+        for (unsigned int i = 0; i < amount; i++)
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
+            blurShader.setInt("horizontal", horizontal);
+            glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[!horizontal]);
+            renderQuad();
+            horizontal = !horizontal;
+            if (first_iteration)
+                first_iteration = false;
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        finalShader.use();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, colorBuffers[0]);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[!horizontal]);
+        finalShader.setInt("bloom", bloom);
+        finalShader.setInt("hdr", hdr);
+        finalShader.setFloat("exposure", exposure);
+        finalShader.setFloat("grayscale", grayscale);
+
+        renderQuad();
 
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
@@ -764,6 +903,13 @@ void DrawImGui(ProgramState *programState) {
         ImGui::Text("(Yaw, Pitch): (%f, %f)", c.Yaw, c.Pitch);
         ImGui::Text("Camera front: (%f, %f, %f)", c.Front.x, c.Front.y, c.Front.z);
         ImGui::Checkbox("Camera mouse update", &programState->CameraMouseMovementUpdateEnabled);
+        ImGui:: Text("HDR (press H): %d", hdr);
+        ImGui:: Text("Exposure (UP and DOWN to change): %f ", exposure);
+        ImGui:: Text("Blinn (press B): %d ", blinn);
+        ImGui:: Text("Bloom (press SPACE): %d ", bloom);
+        ImGui:: Text("Grayscale (press G): %d ", grayscale);
+        ImGui:: Text("Heightscale (Q and E to change): %f ", heightScale);
+
         ImGui::End();
     }
 
@@ -795,6 +941,23 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             heightScale += 0.0005f;
         else
             heightScale = 1.0f;
+    }
+    if(glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
+        hdr = !hdr;
+    }
+    if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        exposure += 0.05;
+    }
+    if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        exposure -= 0.05;
+        if(exposure < 0)
+            exposure = 0;
+    }
+    if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        bloom = !bloom;
+    }
+    if(glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
+        grayscale = !grayscale;
     }
 }
 
@@ -876,22 +1039,22 @@ unsigned int loadTexture(char const * path)
 
 // renders a 1x1 quad in NDC with manually calculated tangent vectors
 // ------------------------------------------------------------------
-unsigned int quadVAO = 0;
-unsigned int quadVBO;
-void renderQuad()
+unsigned int npmVAO = 0;
+unsigned int npmVBO;
+void renderNPM()
 {
-    if (quadVAO == 0)
+    if (npmVAO == 0)
     {
         // positions
-        glm::vec3 pos1(60.0f,  -0.1f, 60.0f);
-        glm::vec3 pos2(60.0f, -0.1f, -60.0f);
-        glm::vec3 pos3( -60.0f, -0.1f, -60.0f);
-        glm::vec3 pos4( -60.0f,  -0.1f, 60.0f);
+        glm::vec3 pos1(-1.0f,  1.0f, 0.0f);
+        glm::vec3 pos2(-1.0f, -1.0f, 0.0f);
+        glm::vec3 pos3( 1.0f, -1.0f, 0.0f);
+        glm::vec3 pos4( 1.0f,  1.0f, 0.0f);
         // texture coordinates
-        glm::vec2 uv1(0.0f, 20.0f);
+        glm::vec2 uv1(0.0f, 1.0f);
         glm::vec2 uv2(0.0f, 0.0f);
-        glm::vec2 uv3(20.0f, 0.0f);
-        glm::vec2 uv4(20.0f, 20.0f);
+        glm::vec2 uv3(1.0f, 0.0f);
+        glm::vec2 uv4(1.0f, 1.0f);
         // normal vector
         glm::vec3 nm(0.0f, 0.0f, 1.0f);
 
@@ -912,11 +1075,11 @@ void renderQuad()
         tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
         tangent1 = glm::normalize(tangent1);
 
-
         bitangent1.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
         bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
         bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
         bitangent1 = glm::normalize(bitangent1);
+
         // triangle 2
         // ----------
         edge1 = pos3 - pos1;
@@ -931,10 +1094,12 @@ void renderQuad()
         tangent2.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
         tangent2 = glm::normalize(tangent2);
 
+
         bitangent2.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
         bitangent2.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
         bitangent2.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
         bitangent2 = glm::normalize(bitangent2);
+
 
         float quadVertices[] = {
                 // positions            // normal         // texcoords  // tangent                          // bitangent
@@ -947,10 +1112,10 @@ void renderQuad()
                 pos4.x, pos4.y, pos4.z, nm.x, nm.y, nm.z, uv4.x, uv4.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z
         };
         // configure plane VAO
-        glGenVertexArrays(1, &quadVAO);
-        glGenBuffers(1, &quadVBO);
-        glBindVertexArray(quadVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glGenVertexArrays(1, &npmVAO);
+        glGenBuffers(1, &npmVBO);
+        glBindVertexArray(npmVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, npmVBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)0);
@@ -963,7 +1128,37 @@ void renderQuad()
         glEnableVertexAttribArray(4);
         glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(11 * sizeof(float)));
     }
-    glBindVertexArray(quadVAO);
+    glBindVertexArray(npmVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
 }
+
+unsigned int quadVAO = 0;
+unsigned int quadVBO;
+void renderQuad()
+{
+    if (quadVAO == 0)
+    {
+        float quadVertices[] = {
+                // positions        // texture Coords
+                -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+                -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+                1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+                1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        };
+        // setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+}
+
