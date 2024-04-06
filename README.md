@@ -15,7 +15,6 @@
 
 ---------------
 ## Advanced techniques:
-- Obavezne oblasti:
   - [x] Cubemaps
   - [x] HDR, Bloom
   - [x] Normal mapping, Parallax mapping
@@ -38,4 +37,6 @@ Year: 2023/2024 \
 Professor: Vesna Marinković \
 Teaching Assistant: Marko Spasić 
 
-
+## Gallery
+![photo 2](/resources/Gallery/2.png)
+![photo 3](/resources/Gallery/3.png)
